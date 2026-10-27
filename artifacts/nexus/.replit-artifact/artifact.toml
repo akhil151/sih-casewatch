@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "NEXUS Complaint Intelligence"
+description = "An evidence-first, institution-centric dashboard for AICTE bureau officers to track complaints, review potential cross-bureau relationships, and coordinate procedural follow-up. All demonstration records are synthetic; live source-system integrations are not claimed."
+version = "1.0.0"
+id = "artifacts/nexus"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18245
+
+[services.development]
+run = "pnpm --filter @workspace/nexus run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nexus", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/nexus/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18245"
+BASE_PATH = "/"

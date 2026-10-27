@@ -1,0 +1,468 @@
+# PROJECT: NEXUS — AICTE Institution Complaint Intelligence & Coordination Platform
+
+Act as a senior full-stack engineer, product designer, database architect and QA engineer. Build a functional, polished prototype for the following national-level hackathon problem statement.
+
+## 1. Problem statement
+
+**ID:** 26264  
+**Title:** Integrated Dashboard for Monitoring and Tracking Institution-Related Complaint Cases Across AICTE Bureaus/Cells.
+
+AICTE receives complaints concerning technical education institutions through different bureaus, including the Regulation Bureau (RB) and Public Grievance Redressal Cell (PGRC). The lack of a consolidated view makes it difficult to identify related cases, understand procedural progression, prevent unnecessary duplicate actions, track pending complaints and coordinate across bureaus.
+
+NEXUS must provide an evidence-first, institution-centric complaint intelligence and coordination dashboard.
+
+## 2. Core architectural principles
+
+Follow these principles throughout implementation:
+
+1. Original bureau records remain authoritative. NEXUS stores source-attributed observations and consolidated read models.
+2. A shared institution does not automatically imply a duplicate complaint.
+3. A shared matter does not automatically imply an unnecessary duplicate action.
+4. Legitimate regulatory referrals, committee stages, proceedings, inspections and appeals must be distinguishable from potential parallel actions.
+5. AI-generated conclusions must never silently become official facts.
+6. Every simulated record, source and workflow must be clearly identified as simulated.
+7. No fake AICTE API, live data feed or official integration may be claimed as operational.
+8. Prefer a small, reliable, testable implementation over unnecessary microservices or infrastructure.
+
+## 3. Technology stack
+
+Use:
+
+- React with TypeScript and Vite.
+- Tailwind CSS for styling.
+- A consistent icon library such as Lucide.
+- Supabase PostgreSQL for persistent application data.
+- Supabase Auth with Google OAuth.
+- Supabase Row Level Security (RLS) for database authorization.
+- Supabase migrations or version-controlled SQL scripts.
+- A lightweight charting library for dashboard analytics.
+- Replit environment variables for configuration and secrets.
+
+Use the current supported package versions compatible with the Replit environment. Inspect the existing project before changing its configuration. Do not unnecessarily replace working files or install redundant libraries.
+
+If Supabase credentials are unavailable, make the application build and show a clear setup screen. Do not silently substitute mock data while displaying a connected or authenticated status.
+
+## 4. Design direction
+
+Create a premium, professional government-enterprise operations dashboard.
+
+Visual references: modern SOC dashboards, enterprise analytics applications and high-quality administrative workflow software.
+
+Design requirements:
+
+- Clean white/light-neutral primary canvas.
+- Deep navy or slate navigation and typography.
+- Restrained blue accent color.
+- Subtle borders, compact cards and consistent spacing.
+- Excellent information hierarchy and readable typography.
+- Functional responsive sidebar.
+- Useful data tables with status badges, search and filters.
+- Thoughtful empty, loading, error, unauthorized and disconnected states.
+- Desktop-first layout that also works on tablets and mobile.
+- Clear visual distinction between official source facts, system-derived suggestions and human decisions.
+- No excessive gradients, giant decorative headings, unnecessary animations or generic landing-page aesthetics.
+- Do not use emoji as substitutes for interface icons.
+
+The application should look like a credible administrative operations platform, not a generic AI startup template.
+
+## 5. Authentication and access control
+
+Implement Google login through Supabase Auth.
+
+Requirements:
+
+- A polished sign-in page with a “Continue with Google” button.
+- Supabase-managed OAuth flow and callback handling.
+- Persistent sessions and sign-out.
+- Protected application routes.
+- Loading and authentication error handling.
+- No hardcoded credentials, access tokens or service-role keys.
+- A user profile and role display.
+- Secure database access through RLS.
+
+Roles for the prototype:
+
+- Administrator
+- Bureau Officer
+- Regional Officer
+- Read-Only Viewer
+
+Implement a minimal role-assignment mechanism. New users must not automatically receive administrator privileges. Provide a documented, secure way to bootstrap the first administrator.
+
+For the demo, role assignment may require an administrator to approve a user. Enforce permissions in the database, not only by hiding buttons in React.
+
+Use the Supabase publishable/anon client key where appropriate. Never expose the service-role key in browser code.
+
+Document the Google OAuth configuration required in Supabase and the authorized redirect URLs required by Google Cloud.
+
+## 6. Application navigation
+
+Create these working pages:
+
+1. Overview
+2. Institution Registry
+3. Complaint Register
+4. Coordination Workbench
+5. Regulatory Timeline
+6. Reports & Analytics
+7. Data Reliability
+8. Administration
+
+Each page must have a coherent purpose and functional navigation.
+
+### A. Overview dashboard
+
+Show database-backed metrics:
+
+- Total source cases
+- Pending cases
+- Under-process cases
+- Disposed cases
+- Transferred cases
+- Overdue cases
+- Potential overlap alerts
+- Unresolved institution identities
+
+Include:
+
+- Cases by status chart.
+- Workload by bureau chart.
+- Complaint trend chart.
+- Recent source updates.
+- High-priority coordination items.
+- Source freshness and reconciliation status.
+
+Use real database aggregations or clearly identified calculated metrics. Do not hardcode dashboard KPI values.
+
+All displayed counts must use documented status definitions and avoid double-counting transfers or related records.
+
+### B. Institution Registry
+
+Each institution must have:
+
+- Internal institution UUID.
+- AICTE Permanent ID, if available.
+- Institution name.
+- Aliases.
+- Address and state.
+- Region.
+- Identity verification state.
+- Source provenance.
+- Associated source cases.
+
+Provide institution search, filtering and a detail page.
+
+Do not merge institutions solely because their names are similar. Support unresolved identities and candidate mappings.
+
+### C. Complaint Register
+
+Create a functional table with:
+
+- Complaint/case ID.
+- Institution.
+- Complaint category.
+- Receiving bureau.
+- Current handling bureau.
+- Assigned officer, if available.
+- Status.
+- Received date.
+- Last source update.
+- Expected disposal date, if supplied or governed by a configured policy.
+- Data freshness indicator.
+
+Filters must work for bureau, region, category, status and date range.
+
+Provide a case detail page with:
+
+- Source record identifiers.
+- Original source and source revision, when available.
+- Current status and responsible bureau.
+- Available action history.
+- Next action and deadline, when supported.
+- Linked cases and proceedings.
+- Data-quality warnings.
+- A clear distinction between source facts and system suggestions.
+
+### D. Coordination Workbench
+
+This is the core differentiating feature.
+
+Create an evidence-first workflow for investigating potential cross-bureau overlap.
+
+A coordination item should include:
+
+- Institution.
+- Involved source cases.
+- Involved bureaus.
+- Potential relationship type.
+- Matching evidence.
+- Conflicting evidence.
+- Missing information.
+- Data freshness.
+- Rule/model version, where applicable.
+- Review status.
+- Assigned reviewer.
+- Review rationale.
+- Creation and update timestamps.
+
+Support these review decisions:
+
+- Confirmed same matter.
+- Related but distinct matters.
+- Legitimate procedural progression.
+- Potential unnecessary parallel action.
+- Insufficient evidence.
+- Dismissed suggestion.
+
+Require a rationale for consequential review decisions.
+
+A confirmed same-matter relationship must not automatically mark official actions as duplicates.
+
+For the initial version, use deterministic rules and explicit evidence. Examples:
+
+- Same verified institution and a shared formal referral reference.
+- Same institution, category and overlapping dates without an established procedural relationship.
+- Different institutions with similar names, which should be flagged for identity verification rather than merged.
+
+Treat these as candidate-generation rules, not definitive conclusions. Make their limitations visible.
+
+Do not claim an AI model has been trained or evaluated if it has not.
+
+### E. Regulatory Timeline
+
+Represent procedural lineage using explicit relationships between source cases, proceedings and actions.
+
+Support relationship types such as:
+
+- Formal referral.
+- Proceeding stage of.
+- Action derived from.
+- Appeal of.
+- Potential same matter.
+- Confirmed same matter.
+- Related but distinct.
+
+Display a chronological timeline with source references and timestamps.
+
+Include a simulated example in which PGRC receives a complaint and a subsequent RB action follows a documented referral. NEXUS must recognize the relationship as possible legitimate regulatory progression rather than automatically flagging it as duplicate work.
+
+Mark simulated regulatory workflows clearly. Do not represent an illustrative workflow as a verified live AICTE case.
+
+### F. Reports & Analytics
+
+Provide institution-wise, bureau-wise, region-wise, status-wise and monthly reports.
+
+Include:
+
+- Pending case ageing.
+- Disposal rate.
+- Cases by current handling bureau.
+- Potential overlap counts.
+- Review outcomes.
+- Unresolved institution mappings.
+- Source freshness and coverage.
+
+Ensure report definitions are documented and consistent with the underlying database queries.
+
+If time permits, add CSV export with appropriate permission checks.
+
+### G. Data Reliability
+
+Create a reliability console showing:
+
+- Configured data sources.
+- Source connection state.
+- Last successful synchronization.
+- Last attempted synchronization.
+- Records received and processed.
+- Quarantined records.
+- Unresolved discrepancies.
+- Source coverage limitations.
+
+For the prototype, provide a clearly labelled simulated connector for RB and PGRC. Do not label it a real integration.
+
+Implement source-attributed records, ingestion timestamps and reconciliation status. If the source is stale, visibly mark the affected information as stale.
+
+### H. Administration
+
+Allow authorized administrators to:
+
+- Review users and roles.
+- Configure bureau and status mappings.
+- Inspect source configurations.
+- View audit events.
+- Manage the synthetic demonstration dataset.
+- Inspect rule versions.
+
+Protect administrative operations with server/database authorization.
+
+## 7. Database design
+
+Create a normalized PostgreSQL schema with appropriate foreign keys, unique constraints, indexes and timestamps.
+
+Include tables equivalent to:
+
+- profiles
+- institutions
+- institution_aliases
+- data_sources
+- source_cases
+- source_observations
+- complaint_categories
+- case_assignments
+- case_actions
+- proceedings
+- case_relationships
+- coordination_episodes
+- coordination_items
+- coordination_reviews
+- audit_events
+- ingestion_runs
+- reconciliation_issues
+- rule_versions
+
+Adjust the schema if necessary, but preserve the domain distinctions.
+
+Important rules:
+
+- Use UUIDs for internal primary keys.
+- Enforce uniqueness on the source identifier within the relevant source system.
+- Preserve source facts and their provenance.
+- Do not use AI-generated relationships as authoritative source relationships.
+- Record review decisions and their rationale.
+- Prevent unauthorized users from reading or modifying restricted records.
+- Make audit events append-only for normal application roles.
+- Add indexes for case ID, institution ID, status, bureau, received date and relationship lookup.
+- Use transactions for multi-step review decisions and other consistency-sensitive operations.
+
+Create version-controlled SQL migrations and a documented seed script.
+
+## 8. Synthetic demonstration data
+
+Create a deterministic seed dataset with clearly marked synthetic records:
+
+- Approximately 20 institutions.
+- Approximately 50–100 source cases.
+- Both RB and PGRC source records.
+- Multiple case statuses and complaint categories.
+- Different regions.
+- Linked procedural progressions.
+- Genuine potential overlap candidates.
+- Related-but-distinct cases.
+- Ambiguous institution names.
+- Missing identifiers.
+- Stale source records.
+- Unresolved institution mappings.
+- Transferred cases.
+- Overdue cases.
+- Several completed and dismissed coordination reviews.
+
+Include at least these test scenarios:
+
+1. Two complaints concern the same institution but different matters.
+2. PGRC and RB records are linked through a legitimate referral.
+3. Two similar cases have no verified relationship.
+4. Two institution names appear similar but refer to distinct institutions.
+5. A source update is delayed.
+6. A case has incomplete action history.
+7. An officer lacks permission to view a restricted record.
+8. Two users attempt to review the same coordination item.
+
+Make the seed data reproducible and ensure the dashboard KPIs reconcile with it.
+
+Do not seed real personal information or imply that synthetic records are actual AICTE records.
+
+## 9. Reliability and implementation constraints
+
+Prioritize a working end-to-end flow.
+
+Implement:
+
+- Input validation.
+- Safe error handling.
+- Database transaction boundaries.
+- Idempotent seed and demo-data setup.
+- Loading, empty and failure states.
+- Permission checks.
+- Consistent status mappings.
+- Safe handling of concurrent review attempts.
+- Duplicate submission protection.
+- Clear disconnected-source behavior.
+
+Do not introduce Kafka, Kubernetes, multiple microservices, distributed locks or complex orchestration unless the existing environment demonstrably requires them.
+
+Do not implement an action-blocking CAP as though it were connected to actual AICTE systems. The prototype may demonstrate an advisory pre-action check, but label it simulated and explain that actual enforcement requires source-system integration.
+
+## 10. Testing
+
+Write and execute the tests that are practical in the current environment.
+
+At minimum, verify:
+
+- Application build and startup.
+- Authentication and protected routes.
+- Role enforcement and RLS.
+- Institution and case filtering.
+- Dashboard aggregation correctness.
+- Relationship review behavior.
+- Regulatory referral versus potential overlap classification.
+- Concurrent review handling.
+- Source freshness and discrepancy display.
+- Empty, loading and error states.
+
+Fix build errors and failing tests before reporting completion.
+
+Do not claim tests passed unless they were actually executed.
+
+## 11. UI quality requirements
+
+Build a complete, coherent application rather than disconnected placeholder pages.
+
+The Overview page should immediately communicate operational status. The Complaint Register should be useful for real search and filtering. Institution detail should consolidate related records. The Coordination Workbench should make it possible to review a candidate and record a decision.
+
+Use consistent layout, spacing, typography, accessible controls and meaningful status colors.
+
+Every visible primary action must work. If a feature requires configuration or future integration, explain that in the UI rather than displaying a fake success message.
+
+## 12. Mandatory implementation report
+
+After implementation, create `IMPLEMENTATION_REPORT.md` in the repository.
+
+The report must contain:
+
+1. Executive summary.
+2. Actual architecture implemented.
+3. File and directory structure.
+4. Database schema and migrations created.
+5. Authentication implementation and remaining configuration.
+6. RLS policies and role-enforcement details.
+7. Pages and workflows completed.
+8. Synthetic data and scenarios included.
+9. Tests executed and their actual results.
+10. Known defects and incomplete features.
+11. Security risks or configuration gaps.
+12. Environment variables required, with names only—never secret values.
+13. Exact Supabase setup steps.
+14. Exact Google OAuth setup steps.
+15. Exact commands to run the application.
+16. A prioritized next-phase plan.
+
+Separate implemented, tested, configured-but-not-tested, and not implemented items.
+
+Do not fabricate test results, credentials, external integrations or production guarantees.
+
+## 13. Execution instructions
+
+Start by inspecting the current Replit workspace and available dependencies.
+
+Then implement the smallest complete version that includes authentication, database schema, synthetic data, dashboard, institution registry, complaint register and coordination workbench.
+
+Do not stop after creating a landing page or static UI.
+
+Do not ask me to approve every small implementation choice. Make sensible, reversible engineering decisions and document them.
+
+If credentials are missing, implement the integration code and setup documentation, then clearly report what remains unverified.
+
+Before finishing, run the available checks, inspect the critical flows, fix obvious errors and generate `IMPLEMENTATION_REPORT.md`.
+
+The final result must be a credible, functional, hackathon-ready NEXUS prototype with a polished interface and an honest account of what actually works.
