@@ -9,6 +9,7 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase, supabaseConfigured } from "@/lib/supabase";
+import { clearApplicationCache } from "@/lib/queryClient";
 
 export interface AuthProfile {
   id: string;
@@ -157,6 +158,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    clearApplicationCache();
     if (mode === "demo") {
       window.sessionStorage.removeItem(demoStorageKey);
       setMode("setup");
@@ -180,6 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   const enterDemoMode = useCallback(() => {
+    clearApplicationCache();
     window.sessionStorage.setItem(demoStorageKey, "true");
     setAuthError(null);
     setProfile(null);
@@ -187,6 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const leaveDemoMode = useCallback(() => {
+    clearApplicationCache();
     window.sessionStorage.removeItem(demoStorageKey);
     setMode("setup");
     setProfile(null);

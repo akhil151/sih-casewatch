@@ -17,11 +17,12 @@ If either value is missing, the app stays in setup mode. You can explicitly ente
 
 Run these files in order from the Supabase SQL Editor, or apply them using the Supabase CLI:
 
-1. `supabase/migrations/202610270001_nexus_schema.sql`
+1. `supabase/migrations/202610270001_nexus_schema.sql` (repaired stray ON CONFLICT syntax)
 2. `supabase/migrations/202610270002_seed_demo.sql`
 3. `supabase/migrations/202610270003_admin_controls.sql`
+4. `supabase/migrations/202610270004_notifications.sql`
 
-The seed is deterministic and idempotent. It creates 20 synthetic institutions, 80 synthetic source cases split across RB and PGRC, a documented referral progression, candidate overlaps, unresolved identities, stale observations, missing action history, and review examples. It creates no real user accounts or personal complaint data.
+The seed is deterministic and idempotent. It creates 20 synthetic institutions, 80 synthetic source cases split across RB and PGRC, a documented referral progression, candidate overlaps, unresolved identities, stale observations, missing action history, and review examples. It creates no real user accounts or personal complaint data. Migration 4 establishes the notifications table, notification types, operational alerts generator, real-time publication, and automated triggers.
 
 ## 3. Configure Google OAuth
 
@@ -57,3 +58,20 @@ The SQL Editor operation is an explicit bootstrap step and should be limited to 
 - A human-confirmed relationship is stored as a non-authoritative NEXUS relationship. It does not rewrite bureau source records or mark any official action as a duplicate.
 - Source observations and source actions are read-only through the application; no fake source connector or live sync is implemented.
 - The demo seed's source connections are labeled `simulated`. Live bureau integration, production readiness, data retention policy, legal basis, and operational access governance are not provided by this prototype.
+
+## 6. In-App Notifications & Realtime Setup
+
+Migration 4 (`202610270004_notifications.sql`) configures persistent in-app notifications for coordination events, review actions, operational alerts, and profile status changes:
+
+- **Row Level Security**: Users can only select and update (`read_at`) their own notifications.
+- **Append-only integrity**: Arbitrary manual inserts by authenticated users are blocked; notifications are generated strictly through SECURITY DEFINER database functions:
+  - `notify_coordination_review`: Dispatches notifications to relevant bureau/regional officers when a coordination review decision is finalized.
+  - `trg_notify_new_coordination_item`: Trigger on `coordination_items` that immediately notifies officers when high/critical priority candidate items are detected.
+  - `generate_operational_alerts`: Callable function (can be scheduled via `pg_cron`) that creates deduplicated alerts for stale observations (>90 days without updates), unresolved identity mismatches, and overdue reviews.
+  - Profile modification notification: Automatically generated when an administrator updates a user's role or approval status via `admin_update_profile_role`.
+- **Supabase Realtime**:
+  - The migration adds `public.notifications` to `supabase_realtime` publication:
+    ```sql
+    alter publication supabase_realtime add table public.notifications;
+    ```
+  - If Realtime is not enabled in your project tier or network environment, the client gracefully falls back to a 30-second polling interval with zero application crashes.

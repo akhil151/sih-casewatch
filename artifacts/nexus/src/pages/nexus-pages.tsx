@@ -1,8 +1,8 @@
 import { useMemo, useState, type ReactNode, type ElementType } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Link, useParams } from 'wouter';
+import { Link, useParams, useLocation } from 'wouter';
 import {
-  Activity, AlertCircle, ArrowRight, BookOpen, Building2, Check, CheckCircle2,
+  Activity, AlertCircle, ArrowRight, BookOpen, Building2, Check, CheckCheck, CheckCircle2,
   ChevronRight, CircleHelp, ClipboardList, Clock3, Download, ExternalLink, FileClock, FileSearch,
   GitCompareArrows, Landmark, LockKeyhole, Plus, RefreshCw, Search, ShieldAlert,
   ShieldCheck, Sparkles, X,
@@ -10,6 +10,7 @@ import {
 import {
   getAdministration, getAnalytics, getCase, getDashboard, getInstitution,
   getReliability, getTimeline, listCases, listCoordinationItems, listInstitutions,
+  listNotifications, markAllNotificationsRead, markNotificationRead,
   resetSimulatedChanges, submitCoordinationReview, updateProfileAccess,
   upsertStatusMapping,
 } from '@/data/nexus-data';
@@ -93,7 +94,7 @@ export function OverviewPage() {
         </Panel>
         <Panel title="Review priority" detail="System suggestions are triage cues, not official findings." action={<Link className="text-[10px] font-semibold text-primary" href="/coordination">Open review queue <ArrowRight size={12} className="ml-1 inline" /></Link>}>
           <StatePanel empty={!d?.priorityItems?.length} emptyTitle="No priority items" emptyText="New items will appear when source evidence requires review.">
-            <div className="divide-y divide-[hsl(var(--border))]">{(d?.priorityItems ?? []).slice(0, 5).map((item: AnyRecord, i: number) => <Link key={item.id ?? i} href="/coordination" className="flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50"><div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded bg-amber-50 text-amber-700"><GitCompareArrows size={14} /></div><div className="min-w-0 flex-1"><div className="truncate text-[11px] font-semibold text-slate-800">{item.institutionName ?? 'Institution review'}</div><div className="mt-1 text-[10px] text-slate-500">{item.suggestedRelationship ?? item.reviewStatus ?? 'Evidence review needed'}</div></div><ChevronRight size={14} className="mt-1 text-slate-400" /></Link>)}</div>
+            <div className="divide-y divide-[hsl(var(--border))]">{(d?.priorityItems ?? []).slice(0, 5).map((item: AnyRecord, i: number) => <Link key={item.id ?? i} href={`/coordination?item=${item.id}`} className="flex items-start gap-3 px-4 py-3.5 hover:bg-slate-50"><div className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded bg-amber-50 text-amber-700"><GitCompareArrows size={14} /></div><div className="min-w-0 flex-1"><div className="truncate text-[11px] font-semibold text-slate-800">{item.institutionName ?? 'Institution review'}</div><div className="mt-1 text-[10px] text-slate-500">{item.suggestedRelationship ?? item.reviewStatus ?? 'Evidence review needed'}</div></div><ChevronRight size={14} className="mt-1 text-slate-400" /></Link>)}</div>
           </StatePanel>
         </Panel>
       </div>
@@ -167,7 +168,7 @@ export function CasesPage() {
     <Panel title="Case register" detail={`${q.data?.length ?? '—'} case records · Filters apply to source records`}>
       <div className="grid gap-2 border-b border-[hsl(var(--border))] bg-slate-50/50 p-3 sm:grid-cols-2 lg:grid-cols-5"><label className="flex flex-col gap-1 text-[9px] font-bold uppercase tracking-[.09em] text-slate-500 sm:col-span-2 lg:col-span-1">Search records<div className="relative"><Search size={13} className="absolute left-2.5 top-2.5 text-slate-400" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Case ID or institution" className="h-9 w-full rounded border border-[hsl(var(--input))] bg-white pl-8 pr-2 text-[10px] normal-case tracking-normal outline-none focus:border-primary" data-testid="input-case-search" /></div></label><FilterSelect label="Bureau" value={bureau} onChange={setBureau} options={bureaus} /><FilterSelect label="Region" value={region} onChange={setRegion} options={regions} /><FilterSelect label="Category" value={category} onChange={setCategory} options={categories} /><FilterSelect label="Status" value={status} onChange={setStatus} options={statuses} /><label className="flex flex-col gap-1 text-[9px] font-bold uppercase tracking-[.09em] text-slate-500">Received from<input type="date" value={from} onChange={(e) => setFrom(e.target.value)} className="h-9 rounded border border-[hsl(var(--input))] bg-white px-2 text-[10px] normal-case tracking-normal outline-none focus:border-primary" data-testid="filter-received-from" /></label><label className="flex flex-col gap-1 text-[9px] font-bold uppercase tracking-[.09em] text-slate-500">Received to<input type="date" value={to} onChange={(e) => setTo(e.target.value)} className="h-9 rounded border border-[hsl(var(--input))] bg-white px-2 text-[10px] normal-case tracking-normal outline-none focus:border-primary" data-testid="filter-received-to" /></label></div>
       <StatePanel loading={q.isLoading} error={q.error} retry={() => q.refetch()} empty={!q.isLoading && !q.error && !q.data?.length} emptyTitle="No case records match" emptyText="Clear or broaden filters to see other source-attributed cases.">
-        <div className="nexus-scroll overflow-x-auto"><table className="w-full min-w-[970px] text-left"><thead><tr className="border-b border-[hsl(var(--border))] bg-white text-[9px] font-bold uppercase tracking-[.1em] text-slate-500"><th className="px-4 py-3">Source case</th><th className="px-4 py-3">Institution</th><th className="px-4 py-3">Bureau lineage</th><th className="px-4 py-3">Category / status</th><th className="px-4 py-3">Received</th><th className="px-4 py-3">Freshness</th><th></th></tr></thead><tbody>{q.data?.map((c) => <tr key={c.id} className="border-b border-slate-100 last:border-0 hover:bg-[#f7fafc]" data-testid={`row-case-${c.id}`}><td className="px-4 py-3"><Link href={`/complaints/${c.id}`} className="font-mono text-[10px] font-semibold text-primary">{c.sourceCaseId}</Link><div className="mt-1 text-[9px] text-slate-500">{c.source}</div></td><td className="max-w-[220px] px-4 py-3"><Link href={`/institutions/${c.institutionId}`} className="line-clamp-2 text-[10px] font-semibold text-slate-800 hover:text-primary">{c.institutionName}</Link></td><td className="px-4 py-3 text-[10px] text-slate-700">{c.receivingBureau}<div className="my-1 h-px w-9 bg-slate-300" />{c.currentBureau}</td><td className="px-4 py-3"><div className="text-[10px] text-slate-700">{c.category}</div><div className="mt-1"><Badge tone={toneFor(c.status)}>{c.status}</Badge></div></td><td className="px-4 py-3 text-[10px] text-slate-600">{fmt(c.receivedAt)}<div className="mt-1 text-[9px] text-slate-400">Updated {fmt(c.lastUpdatedAt)}</div></td><td className="px-4 py-3"><Badge tone={toneFor(c.freshness)}>{c.freshness}</Badge></td><td className="px-4 py-3"><Link href={`/complaints/${c.id}`} className="text-slate-400 hover:text-primary"><ChevronRight size={14} /></Link></td></tr>)}</tbody></table></div>
+        <div className="nexus-scroll overflow-x-auto"><table className="w-full min-w-[970px] text-left"><thead><tr className="border-b border-[hsl(var(--border))] bg-white text-[9px] font-bold uppercase tracking-[.1em] text-slate-500"><th className="px-4 py-3">Source case</th><th className="px-4 py-3">Institution</th><th className="px-4 py-3">Bureau lineage</th><th className="px-4 py-3">Category / status</th><th className="px-4 py-3">Received</th><th className="px-4 py-3">Freshness</th><th></th></tr></thead><tbody>{q.data?.map((c) => <tr key={c.id} className="border-b border-slate-100 last:border-0 hover:bg-[#f7fafc]" data-testid={`row-case-${c.id}`}><td className="px-4 py-3"><Link href={`/complaints/${c.id}`} className="font-mono text-[10px] font-semibold text-primary">{c.sourceCaseId}</Link><div className="mt-1 text-[9px] text-slate-500">{c.source}</div></td><td className="max-w-[220px] px-4 py-3">{c.institutionId ? <Link href={`/institutions/${c.institutionId}`} className="line-clamp-2 text-[10px] font-semibold text-slate-800 hover:text-primary">{c.institutionName}</Link> : <span className="line-clamp-2 text-[10px] font-medium text-slate-500 italic">{c.institutionName}</span>}</td><td className="px-4 py-3 text-[10px] text-slate-700">{c.receivingBureau}<div className="my-1 h-px w-9 bg-slate-300" />{c.currentBureau}</td><td className="px-4 py-3"><div className="text-[10px] text-slate-700">{c.category}</div><div className="mt-1"><Badge tone={toneFor(c.status)}>{c.status}</Badge></div></td><td className="px-4 py-3 text-[10px] text-slate-600">{fmt(c.receivedAt)}<div className="mt-1 text-[9px] text-slate-400">Updated {fmt(c.lastUpdatedAt)}</div></td><td className="px-4 py-3"><Badge tone={toneFor(c.freshness)}>{c.freshness}</Badge></td><td className="px-4 py-3"><Link href={`/complaints/${c.id}`} className="text-slate-400 hover:text-primary"><ChevronRight size={14} /></Link></td></tr>)}</tbody></table></div>
       </StatePanel>
     </Panel>
   </div>;
@@ -180,9 +181,17 @@ export function CaseDetailPage() {
   return <div><PageHeader eyebrow="Source case record" title={c?.sourceCaseId ?? 'Case details'} description="The source record is the authoritative representation of its own facts. Cross-record suggestions are separately reviewed." action={<Link href="/complaints" className="rounded border border-[hsl(var(--border))] bg-card px-3 py-2 text-[10px] font-semibold text-slate-600">Back to register</Link>} />
     <StatePanel loading={q.isLoading} error={q.error} retry={() => q.refetch()} empty={!q.isLoading && !q.error && !c} emptyTitle="Case record not found" emptyText="No source case is available for this identifier.">
       {c && <>
+        {(c.status === 'Unmapped' || c.source === 'Unmapped' || c.currentBureau === 'Unmapped') && (
+          <div className="mb-4 flex gap-2 rounded border border-amber-300 bg-amber-50 p-3 text-[10px] leading-5 text-amber-900">
+            <ShieldAlert size={14} className="mt-0.5 shrink-0 text-amber-700" />
+            <span>
+              <strong>Data quality notice:</strong> This source record contains unmapped values (Raw status: <code>{c.rawStatus ?? 'unknown'}</code>, Raw source: <code>{c.rawSource ?? 'unknown'}</code>). It is preserved as recorded but excluded from official canonical breakdowns until mapped.
+            </span>
+          </div>
+        )}
         {c.restricted && <div className="mb-4 flex gap-2 rounded border border-amber-200 bg-amber-50 p-3 text-[10px] leading-5 text-amber-900"><LockKeyhole size={14} className="mt-0.5 shrink-0" /><span><strong>Restricted source record.</strong> Access and onward handling must follow the applicable source and role restrictions.</span></div>}
         <div className="grid gap-4 xl:grid-cols-[1fr_320px]"><div className="space-y-4">
-          <Panel title="Source facts" detail={`Attributed to ${c.source}${c.sourceRevision ? ` · revision ${c.sourceRevision}` : ''}`}><div className="grid gap-x-6 gap-y-5 p-4 sm:grid-cols-2 sm:p-5"><div><DataLabel>Source case ID</DataLabel><div className="font-mono text-[12px] font-semibold text-slate-800">{c.sourceCaseId}</div></div><div><DataLabel>Source</DataLabel><div className="text-[11px] text-slate-800">{c.source}</div></div><div className="sm:col-span-2"><DataLabel>Institution</DataLabel><Link href={`/institutions/${c.institutionId}`} className="text-[12px] font-semibold text-primary">{c.institutionName} <ExternalLink size={12} className="ml-1 inline" /></Link></div><div><DataLabel>Category</DataLabel><div className="text-[11px] text-slate-800">{c.category}</div></div><div><DataLabel>Current status</DataLabel><Badge tone={toneFor(c.status)}>{c.status}</Badge></div><div><DataLabel>Received by bureau</DataLabel><div className="text-[11px] text-slate-800">{c.receivingBureau}</div></div><div><DataLabel>Current bureau</DataLabel><div className="text-[11px] text-slate-800">{c.currentBureau}</div></div><div><DataLabel>Assigned officer</DataLabel><div className="text-[11px] text-slate-800">{c.assignedOfficer ?? 'Not recorded'}</div></div><div><DataLabel>Freshness</DataLabel><Badge tone={toneFor(c.freshness)}>{c.freshness}</Badge></div><div><DataLabel>Received</DataLabel><div className="text-[11px] text-slate-800">{fmt(c.receivedAt)}</div></div><div><DataLabel>Last updated</DataLabel><div className="text-[11px] text-slate-800">{fmt(c.lastUpdatedAt)}</div></div><div><DataLabel>Expected disposal</DataLabel><div className="text-[11px] text-slate-800">{fmt(c.expectedDisposalAt)}</div></div><div><DataLabel>Referral reference</DataLabel><div className="font-mono text-[10px] text-slate-700">{c.referralReference ?? 'Not recorded'}</div></div></div></Panel>
+          <Panel title="Source facts" detail={`Attributed to ${c.source}${c.sourceRevision ? ` · revision ${c.sourceRevision}` : ''}`}><div className="grid gap-x-6 gap-y-5 p-4 sm:grid-cols-2 sm:p-5"><div><DataLabel>Source case ID</DataLabel><div className="font-mono text-[12px] font-semibold text-slate-800">{c.sourceCaseId}</div></div><div><DataLabel>Source</DataLabel><div className="text-[11px] text-slate-800">{c.source}</div></div><div className="sm:col-span-2"><DataLabel>Institution</DataLabel>{c.institutionId ? <Link href={`/institutions/${c.institutionId}`} className="text-[12px] font-semibold text-primary">{c.institutionName} <ExternalLink size={12} className="ml-1 inline" /></Link> : <span className="text-[12px] font-medium text-slate-700 italic">{c.institutionName} <span className="ml-1 text-[10px] font-semibold text-amber-700">(Unresolved identity)</span></span>}</div><div><DataLabel>Category</DataLabel><div className="text-[11px] text-slate-800">{c.category}</div></div><div><DataLabel>Current status</DataLabel><Badge tone={toneFor(c.status)}>{c.status}</Badge></div><div><DataLabel>Received by bureau</DataLabel><div className="text-[11px] text-slate-800">{c.receivingBureau}</div></div><div><DataLabel>Current bureau</DataLabel><div className="text-[11px] text-slate-800">{c.currentBureau}</div></div><div><DataLabel>Assigned officer</DataLabel><div className="text-[11px] text-slate-800">{c.assignedOfficer ?? 'Not recorded'}</div></div><div><DataLabel>Freshness</DataLabel><Badge tone={toneFor(c.freshness)}>{c.freshness}</Badge></div><div><DataLabel>Received</DataLabel><div className="text-[11px] text-slate-800">{fmt(c.receivedAt)}</div></div><div><DataLabel>Last updated</DataLabel><div className="text-[11px] text-slate-800">{fmt(c.lastUpdatedAt)}</div></div><div><DataLabel>Expected disposal</DataLabel><div className="text-[11px] text-slate-800">{fmt(c.expectedDisposalAt)}</div></div><div><DataLabel>Referral reference</DataLabel><div className="font-mono text-[10px] text-slate-700">{c.referralReference ?? 'Not recorded'}</div></div></div></Panel>
           <Panel title="Procedural actions" detail="Chronology is presented as recorded; sequence does not imply a finding."><StatePanel empty={!c.actions.length} emptyTitle="No procedural actions recorded" emptyText="The source has not supplied action history for this case."><div className="divide-y divide-slate-100">{c.actions.map((a, index) => <div key={a.id} className="relative flex gap-3 px-4 py-4 sm:px-5"><div className="relative mt-0.5 flex w-5 justify-center"><div className="z-10 grid h-4 w-4 place-items-center rounded-full border border-[#b9cad9] bg-white"><span className="h-1.5 w-1.5 rounded-full bg-[#517797]" /></div>{index !== c.actions.length - 1 && <div className="absolute top-4 h-full w-px bg-slate-200" />}</div><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><span className="text-[11px] font-semibold text-slate-800">{a.label}</span><Badge>{a.bureau}</Badge></div><div className="mt-1.5 text-[10px] text-slate-500">{fmt(a.occurredAt)} {a.sourceReference && <span className="ml-2 font-mono text-slate-400">Ref: {a.sourceReference}</span>}</div>{a.note && <p className="mt-2 text-[10px] leading-5 text-slate-600">{a.note}</p>}</div></div>)}</div></StatePanel></Panel>
         </div>
         <div className="space-y-4"><Panel title="Record control" detail="Source metadata"><div className="space-y-4 p-4"><div><DataLabel>Source revision</DataLabel><div className="font-mono text-[10px] text-slate-700">{c.sourceRevision ?? 'Not supplied'}</div></div><div><DataLabel>Attribution</DataLabel><Badge tone="blue"><ShieldCheck size={11} />Source-provided</Badge></div><div><DataLabel>Record visibility</DataLabel><Badge tone={c.restricted ? 'amber' : 'green'}>{c.restricted ? 'Restricted' : 'Standard'}</Badge></div><div className="rounded border border-slate-200 bg-slate-50 p-3 text-[10px] leading-5 text-slate-600">This page displays source facts without modifying the originating record.</div></div></Panel>
@@ -194,14 +203,28 @@ export function CaseDetailPage() {
 
 export function CoordinationPage() {
   const [reviewStatus, setReviewStatus] = useState('');
-  const [selected, setSelected] = useState<string | null>(null);
+  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
+  const urlItemId = searchParams.get('item');
+  const [selected, setSelected] = useState<string | null>(urlItemId);
   const [decision, setDecision] = useState<ReviewDecision | ''>('');
   const [rationale, setRationale] = useState('');
   const [notice, setNotice] = useState('');
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ['nexus-coordination', reviewStatus], queryFn: () => listCoordinationItems({ reviewStatus: reviewStatus || undefined }) });
-  const mutation = useMutation({ mutationFn: submitCoordinationReview, onSuccess: async () => { setNotice('Review submitted. The human decision is recorded separately from the system suggestion.'); setRationale(''); setDecision(''); await qc.invalidateQueries({ queryKey: ['nexus-coordination'] }); } });
-  const item = q.data?.find((i) => i.id === selected) ?? q.data?.find((i) => i.reviewStatus === 'open') ?? q.data?.[0];
+  const mutation = useMutation({
+    mutationFn: submitCoordinationReview,
+    onSuccess: async () => {
+      setNotice('Review submitted. The human decision is recorded separately from the system suggestion.');
+      setRationale('');
+      setDecision('');
+      await qc.invalidateQueries({ queryKey: ['nexus-coordination'] });
+      await qc.invalidateQueries({ queryKey: ['nexus-dashboard'] });
+      await qc.invalidateQueries({ queryKey: ['nexus-analytics'] });
+      await qc.invalidateQueries({ queryKey: ['nexus-notifications'] });
+      await qc.invalidateQueries({ queryKey: ['nexus-unread-count'] });
+    },
+  });
+  const item = q.data?.find((i) => i.id === (selected ?? urlItemId)) ?? q.data?.find((i) => i.reviewStatus === 'open') ?? q.data?.[0];
   const { profile, mode } = useAuth();
   const canReview = mode === 'demo' || ['administrator', 'bureau_officer', 'regional_officer'].includes(profile?.role ?? '');
   const submit = () => { if (!item || !decision || rationale.trim().length < 12) return; mutation.mutate({ itemId: item.id, decision, rationale: rationale.trim(), expectedUpdatedAt: item.updatedAt }); };
@@ -248,7 +271,53 @@ export function TimelinePage() {
 export function AnalyticsPage() {
   const q = useQuery({ queryKey: ['nexus-analytics'], queryFn: getAnalytics });
   const a = q.data as unknown as AnyRecord | undefined;
-  return <div><PageHeader eyebrow="Operational reporting" title="Analytics" description="Descriptive views of source records and human review outcomes. Counts are not findings about an institution." action={<button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded border border-[hsl(var(--border))] bg-card px-3 py-2 text-[10px] font-semibold text-slate-600"><Download size={13} /> Print report</button>} />
+
+  const exportCasesCsv = async () => {
+    try {
+      const cases = await listCases();
+      const headers = [
+        'Source Case ID',
+        'Source Bureau',
+        'Receiving Bureau',
+        'Current Bureau',
+        'Institution Name',
+        'Category',
+        'Status',
+        'Received Date',
+        'Last Updated',
+        'Freshness',
+        'Restricted',
+      ];
+      const escape = (val: string | null | undefined) => `"${(val ?? '').replaceAll('"', '""')}"`;
+      const rows = cases.map((c) => [
+        escape(c.sourceCaseId),
+        escape(c.source),
+        escape(c.receivingBureau),
+        escape(c.currentBureau),
+        escape(c.institutionName),
+        escape(c.category),
+        escape(c.status),
+        escape(c.receivedAt),
+        escape(c.lastUpdatedAt),
+        escape(c.freshness),
+        escape(c.restricted ? 'Yes' : 'No'),
+      ]);
+      const csv = [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `nexus-cases-export-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to export CSV:', err);
+    }
+  };
+
+  return <div><PageHeader eyebrow="Operational reporting" title="Analytics" description="Descriptive views of source records and human review outcomes. Counts are not findings about an institution." action={<div className="flex items-center gap-2"><button onClick={exportCasesCsv} className="inline-flex items-center gap-2 rounded border border-[hsl(var(--border))] bg-card px-3 py-2 text-[10px] font-semibold text-slate-600 hover:text-primary transition" data-testid="button-export-cases-csv"><Download size={13} /> Export cases CSV</button><button onClick={() => window.print()} className="inline-flex items-center gap-2 rounded border border-[hsl(var(--border))] bg-card px-3 py-2 text-[10px] font-semibold text-slate-600 hover:text-primary transition" data-testid="button-print-report">Print report</button></div>} />
     <StatePanel loading={q.isLoading} error={q.error} retry={() => q.refetch()}>
       <div className="grid gap-4 xl:grid-cols-2">
         <DistributionPanel title="Case ageing" detail="Current age buckets from source records" data={a?.ageingBuckets} />
@@ -401,3 +470,198 @@ export function AdministrationPage() {
     </StatePanel>
   </div>;
 }
+
+export function NotificationsPage() {
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('');
+  const { mode } = useAuth();
+  const qc = useQueryClient();
+  const [, setLocation] = useLocation();
+
+  const q = useQuery({
+    queryKey: ['nexus-notifications', unreadOnly],
+    queryFn: () => listNotifications({ unreadOnly }),
+  });
+
+  const markReadMutation = useMutation({
+    mutationFn: markNotificationRead,
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['nexus-unread-count'] });
+      await qc.invalidateQueries({ queryKey: ['nexus-notifications'] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: markAllNotificationsRead,
+    onSuccess: async () => {
+      await qc.invalidateQueries({ queryKey: ['nexus-unread-count'] });
+      await qc.invalidateQueries({ queryKey: ['nexus-notifications'] });
+    },
+  });
+
+  const items = useMemo(() => {
+    let list = q.data ?? [];
+    if (typeFilter) {
+      list = list.filter((n) => n.type === typeFilter);
+    }
+    return list;
+  }, [q.data, typeFilter]);
+
+  const unreadCount = useMemo(() => (q.data ?? []).filter((n) => !n.readAt).length, [q.data]);
+
+  return (
+    <div>
+      <PageHeader
+        eyebrow="Activity Center"
+        title="Notifications"
+        description="System events, coordination review requests, access assignments and operational data quality alerts."
+        action={
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <button
+                onClick={() => markAllReadMutation.mutate()}
+                disabled={markAllReadMutation.isPending}
+                className="inline-flex items-center gap-1.5 rounded border border-[hsl(var(--border))] bg-card px-3 py-2 text-[10px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                data-testid="button-page-mark-all-read"
+              >
+                <CheckCheck size={13} className="text-emerald-600" />
+                Mark all as read
+              </button>
+            )}
+            <Badge tone={mode === 'demo' ? 'amber' : 'green'}>
+              {mode === 'demo' ? 'Simulated notifications' : 'Secure notifications'}
+            </Badge>
+          </div>
+        }
+      />
+
+      <Panel title="Notifications log" detail={`${items.length} notifications ${unreadOnly ? '(unread only)' : ''}`}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[hsl(var(--border))] bg-slate-50/60 p-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => setUnreadOnly(false)}
+              className={`rounded px-3 py-1.5 text-[10px] font-semibold transition ${
+                !unreadOnly ? 'bg-[#254866] text-white' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+              data-testid="filter-all-notifications"
+            >
+              All notices ({q.data?.length ?? 0})
+            </button>
+            <button
+              onClick={() => setUnreadOnly(true)}
+              className={`rounded px-3 py-1.5 text-[10px] font-semibold transition ${
+                unreadOnly ? 'bg-[#254866] text-white' : 'bg-white text-slate-700 border border-slate-200'
+              }`}
+              data-testid="filter-unread-notifications"
+            >
+              Unread only ({unreadCount})
+            </button>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Type:
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="ml-1.5 h-8 rounded border border-slate-200 bg-white px-2 text-[10px] font-normal text-slate-700"
+                data-testid="select-notification-type-filter"
+              >
+                <option value="">All types</option>
+                <option value="coordination_available">Review queue</option>
+                <option value="coordination_reviewed">Review outcome</option>
+                <option value="access_updated">Access updated</option>
+                <option value="operational_alert">System alert</option>
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <StatePanel
+          loading={q.isLoading}
+          error={q.error}
+          retry={() => q.refetch()}
+          empty={!q.isLoading && !q.error && items.length === 0}
+          emptyTitle={unreadOnly ? 'No unread notifications' : 'No notifications found'}
+          emptyText={unreadOnly ? 'All notifications have been marked as read.' : 'No system notifications match the selected filter.'}
+        >
+          <div className="divide-y divide-slate-100">
+            {items.map((notification) => {
+              const isUnread = !notification.readAt;
+              return (
+                <div
+                  key={notification.id}
+                  className={`flex flex-col gap-3 p-4 transition sm:flex-row sm:items-start sm:justify-between ${
+                    isUnread ? 'bg-[#f4f8fb]/80' : 'bg-white hover:bg-slate-50'
+                  }`}
+                  data-testid={`notification-row-${notification.id}`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="mt-1 flex h-2 w-2 shrink-0 items-center justify-center">
+                      {isUnread && <span className="h-2 w-2 rounded-full bg-sky-600" />}
+                    </div>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge tone={notification.type === 'operational_alert' ? 'amber' : notification.type === 'access_updated' ? 'green' : 'blue'}>
+                          {notification.type.replaceAll('_', ' ')}
+                        </Badge>
+                        {notification.isSimulated && (
+                          <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[8px] font-bold text-amber-800">
+                            SIMULATED
+                          </span>
+                        )}
+                        <h3 className={`text-xs font-semibold ${isUnread ? 'text-slate-900 font-bold' : 'text-slate-700'}`}>
+                          {notification.title}
+                        </h3>
+                      </div>
+                      <p className="mt-1 text-[11px] leading-5 text-slate-600">
+                        {notification.message}
+                      </p>
+                      <div className="mt-2 flex flex-wrap items-center gap-3 text-[9px] text-slate-400">
+                        <span>Recorded {fmt(notification.createdAt)}</span>
+                        {notification.readAt && (
+                          <span>· Read {fmt(notification.readAt)}</span>
+                        )}
+                        {notification.dedupeKey && (
+                          <span className="font-mono text-slate-400">Ref: {notification.dedupeKey}</span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex shrink-0 items-center gap-2 self-end sm:self-center">
+                    {notification.destinationPath && (
+                      <button
+                        onClick={() => {
+                          if (isUnread) markReadMutation.mutate(notification.id);
+                          setLocation(notification.destinationPath);
+                        }}
+                        className="inline-flex items-center gap-1 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-primary hover:bg-slate-50"
+                        data-testid={`button-open-record-${notification.id}`}
+                      >
+                        Open record <ExternalLink size={11} />
+                      </button>
+                    )}
+                    {isUnread && (
+                      <button
+                        onClick={() => markReadMutation.mutate(notification.id)}
+                        disabled={markReadMutation.isPending}
+                        className="rounded border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-600 hover:bg-slate-50"
+                        title="Mark as read"
+                        data-testid={`button-row-mark-read-${notification.id}`}
+                      >
+                        <Check size={12} className="mr-1 inline text-slate-500" />
+                        Mark read
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </StatePanel>
+      </Panel>
+    </div>
+  );
+}
+

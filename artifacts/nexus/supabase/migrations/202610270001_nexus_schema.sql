@@ -514,7 +514,6 @@ begin
      where left_case.coordination_item_id = p_item_id
      on conflict (source_case_id, related_case_id, relationship_type, provenance)
      do nothing;
-    on conflict (source_case_id, related_case_id, relationship_type, provenance) do nothing;
   end if;
 
   insert into public.audit_events (actor_profile_id, action, target, details)

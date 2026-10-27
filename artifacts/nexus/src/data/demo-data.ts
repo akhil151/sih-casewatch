@@ -4,7 +4,7 @@ import type {
   CoordinationItem,
   Institution,
   SourceCase,
-} from "@/types/nexus";
+} from "../types/nexus";
 
 const DEMO_AS_OF = new Date("2026-10-27T12:00:00.000Z");
 

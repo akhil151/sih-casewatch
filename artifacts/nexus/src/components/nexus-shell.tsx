@@ -1,8 +1,9 @@
 import { useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'wouter';
 import { useAuth } from '@/auth/AuthContext';
+import { NotificationCenter } from '@/components/notification-center';
 import {
-  Activity, Building2, ChartNoAxesCombined, ChevronDown, CircleHelp,
+  Activity, Bell, Building2, ChartNoAxesCombined, ChevronDown, CircleHelp,
   ClipboardList, Clock3, Command, FileSearch, GitCompareArrows, Landmark,
   Menu, Search, Settings2, ShieldCheck, X,
 } from 'lucide-react';
@@ -12,6 +13,7 @@ const nav = [
   { label: 'Institutions', href: '/institutions', icon: Building2, group: 'Workspace' },
   { label: 'Case register', href: '/complaints', icon: ClipboardList, group: 'Workspace' },
   { label: 'Coordination review', href: '/coordination', icon: GitCompareArrows, group: 'Workspace', badge: 'Review' },
+  { label: 'Notifications', href: '/notifications', icon: Bell, group: 'Workspace' },
   { label: 'Procedural lineage', href: '/timeline', icon: Clock3, group: 'Workspace' },
   { label: 'Reports', href: '/analytics', icon: ChartNoAxesCombined, group: 'Intelligence' },
   { label: 'Source reliability', href: '/reliability', icon: Activity, group: 'Intelligence' },
@@ -93,6 +95,7 @@ export function NexusShell({ children }: { children: ReactNode }) {
           <div className="flex items-center gap-2.5">
             <Link href="/coordination" className="hidden h-8 items-center gap-2 rounded-md border border-[hsl(var(--border))] bg-card px-3 text-[11px] font-medium text-muted-foreground hover:text-foreground md:flex"><Search size={13} /> Find a record <kbd className="ml-3 rounded border px-1 py-0.5 font-mono text-[9px]">/</kbd></Link>
             <div className="hidden h-7 items-center rounded border border-[hsl(var(--border))] bg-card px-2 text-[9px] font-semibold uppercase tracking-[.1em] text-muted-foreground sm:flex"><span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${mode === 'demo' ? 'bg-amber-500' : 'bg-emerald-500'}`} />{mode === 'demo' ? 'Demo session' : 'Secure workspace'}</div>
+            <NotificationCenter />
             <Link href="/reliability" title="Help and data status" className="grid h-8 w-8 place-items-center rounded-md border border-[hsl(var(--border))] bg-card text-muted-foreground hover:text-primary"><CircleHelp size={15} /></Link>
           </div>
         </header>

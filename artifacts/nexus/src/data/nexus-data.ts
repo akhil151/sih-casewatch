@@ -3,8 +3,8 @@ import {
   demoCoordinationItems,
   demoInstitutions,
   getDemoAsOf,
-} from "@/data/demo-data";
-import { supabase } from "@/lib/supabase";
+} from "./demo-data";
+import { supabase } from "../lib/supabase";
 import type {
   AdministrationSnapshot,
   AnalyticsSnapshot,
@@ -15,12 +15,14 @@ import type {
   DashboardSnapshot,
   Freshness,
   Institution,
+  NexusNotification,
+  NotificationType,
   ReliabilitySnapshot,
   ReviewDecision,
   SourceCase,
   TimelineEvent,
-} from "@/types/nexus";
-export type { ReviewDecision } from "@/types/nexus";
+} from "../types/nexus";
+export type { ReviewDecision, NexusNotification, NotificationType } from "../types/nexus";
 
 const DEMO_MODE_KEY = "nexus.simulated-demo-mode";
 const DEMO_REVIEW_KEY = "nexus.simulated-reviews";
@@ -28,6 +30,7 @@ const DEMO_REVIEWER = "Demo Bureau Reviewer";
 const DEMO_ADMIN_USERS_KEY = "nexus.simulated-admin-users";
 const DEMO_ADMIN_MAPPINGS_KEY = "nexus.simulated-admin-mappings";
 const DEMO_ADMIN_AUDIT_KEY = "nexus.simulated-admin-audit";
+const DEMO_NOTIFICATIONS_KEY = "nexus.simulated-notifications";
 
 export interface InstitutionFilters {
   query?: string;
@@ -70,27 +73,21 @@ function requiredResult<T>(
   return result.data;
 }
 
-function bureau(value: unknown): Bureau {
-  return value === "RB" ? "RB" : "PGRC";
+export function bureau(value: unknown): Bureau {
+  if (value === "RB") return "RB";
+  if (value === "PGRC") return "PGRC";
+  return "Unmapped";
 }
 
-function status(value: unknown): CaseStatus {
-  switch (value) {
-    case "pending":
-    case "Pending":
-      return "Pending";
-    case "under_process":
-    case "Under Process":
-      return "Under Process";
-    case "disposed":
-    case "Disposed":
-      return "Disposed";
-    case "transferred":
-    case "Transferred":
-      return "Transferred";
-    default:
-      return "Pending";
+export function status(value: unknown): CaseStatus {
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (s === "pending" || s === "Pending") return "Pending";
+    if (s === "under_process" || s === "Under process" || s === "Under Process") return "Under Process";
+    if (s === "disposed" || s === "Disposed") return "Disposed";
+    if (s === "transferred" || s === "Transferred" || s === "Transferred to RB" || s === "Transferred to PGRC") return "Transferred";
   }
+  return "Unmapped";
 }
 
 function freshness(updatedAt?: string | null): Freshness {
@@ -303,8 +300,11 @@ async function loadLiveCases(): Promise<SourceCase[]> {
       id: row.id,
       sourceCaseId: row.source_case_id,
       source: sourceBureau,
+      rawSource: dataSource?.code ?? undefined,
       receivingBureau: bureau(row.receiving_bureau),
+      rawReceivingBureau: row.receiving_bureau,
       currentBureau: bureau(row.current_bureau),
+      rawCurrentBureau: row.current_bureau,
       institutionId: row.institution_id,
       institutionName:
         institution?.name ||
@@ -312,6 +312,7 @@ async function loadLiveCases(): Promise<SourceCase[]> {
         "Unresolved institution identity",
       category: category?.name ?? "Unmapped category",
       status: status(row.status),
+      rawStatus: row.status,
       assignedOfficer: row.assigned_officer_id ?? undefined,
       receivedAt: row.received_at,
       lastUpdatedAt: row.source_updated_at ?? row.received_at,
@@ -452,11 +453,13 @@ function buildDashboard(
   reliability: ReliabilitySnapshot,
 ): DashboardSnapshot {
   const total = cases.length;
+  const unmappedCount = cases.filter((sourceCase) => sourceCase.status === "Unmapped").length;
   const statusCounts: DashboardSnapshot["statusCounts"] = [
     "Pending",
     "Under Process",
     "Disposed",
     "Transferred",
+    ...(unmappedCount > 0 ? ["Unmapped" as const] : []),
   ].map((caseStatus) => ({
     status: caseStatus as CaseStatus,
     count: cases.filter((sourceCase) => sourceCase.status === caseStatus).length,
@@ -529,9 +532,9 @@ function buildDashboard(
     priorityItems: openItems.slice(0, 5),
     reliability: {
       staleCases: cases.filter((sourceCase) => sourceCase.freshness === "stale").length,
-      unresolvedIssues: reliability.discrepancies.filter(
-        (issue) => issue.state === "open",
-      ).length,
+      unresolvedIssues:
+        reliability.discrepancies.filter((issue) => issue.state === "open").length +
+        unmappedCount,
       sourceFreshness,
     },
   };
@@ -752,6 +755,25 @@ export async function submitCoordinationReview(input: {
     const reviews = getDemoReviews();
     reviews[item.id] = review;
     window.localStorage.setItem(DEMO_REVIEW_KEY, JSON.stringify(reviews));
+
+    const newNotif: NexusNotification = {
+      id: `demo-notif-rev-${Date.now()}`,
+      recipientId: "demo-user-1",
+      type: "coordination_reviewed",
+      title: "Coordination Review Recorded",
+      message: `A human decision (${input.decision.replaceAll("_", " ")}) was recorded for ${item.institutionName}.`,
+      entityType: "coordination_item",
+      entityId: item.id,
+      destinationPath: `/coordination?item=${item.id}`,
+      createdAt: new Date().toISOString(),
+      readAt: null,
+      isSimulated: true,
+      dedupeKey: `demo-rev-${item.id}-${Date.now()}`,
+    };
+    const currentNotifs = getDemoNotifications();
+    currentNotifs.unshift(newNotif);
+    window.localStorage.setItem(DEMO_NOTIFICATIONS_KEY, JSON.stringify(currentNotifs.slice(0, 30)));
+
     return review;
   }
 
@@ -1129,6 +1151,25 @@ export async function updateProfileAccess(input: {
       occurredAt: new Date().toISOString(),
     });
     window.localStorage.setItem(DEMO_ADMIN_AUDIT_KEY, JSON.stringify(audit.slice(0, 20)));
+
+    const newNotif: NexusNotification = {
+      id: `demo-notif-access-${Date.now()}`,
+      recipientId: input.userId,
+      type: "access_updated",
+      title: "Account Access Updated",
+      message: `Access assigned: ${input.role.replaceAll("_", " ")} (Approval: ${input.approvalStatus}).`,
+      entityType: "profile",
+      entityId: input.userId,
+      destinationPath: "/administration",
+      createdAt: new Date().toISOString(),
+      readAt: null,
+      isSimulated: true,
+      dedupeKey: `demo-access-${input.userId}-${Date.now()}`,
+    };
+    const currentNotifs = getDemoNotifications();
+    currentNotifs.unshift(newNotif);
+    window.localStorage.setItem(DEMO_NOTIFICATIONS_KEY, JSON.stringify(currentNotifs.slice(0, 30)));
+
     return updated;
   }
 
@@ -1222,6 +1263,7 @@ export function resetSimulatedChanges() {
   window.localStorage.removeItem(DEMO_ADMIN_USERS_KEY);
   window.localStorage.removeItem(DEMO_ADMIN_MAPPINGS_KEY);
   window.localStorage.removeItem(DEMO_ADMIN_AUDIT_KEY);
+  window.localStorage.removeItem(DEMO_NOTIFICATIONS_KEY);
 }
 
 function demoDateOffset(days: number) {
@@ -1233,4 +1275,179 @@ function demoDateOffset(days: number) {
 export function getSimulationAsOf() {
   return getDemoAsOf();
 }
+
+function getInitialDemoNotifications(): NexusNotification[] {
+  return [
+    {
+      id: "demo-notif-1",
+      recipientId: "demo-user-1",
+      type: "coordination_available",
+      title: "Coordination Item Awaiting Review",
+      message: "Candidate cross-bureau overlap for Eastern Institute of Technology (SIM-0008 ↔ SIM-0028) requires evidence review.",
+      entityType: "coordination_item",
+      entityId: "demo-coord-overlap",
+      destinationPath: "/coordination?item=demo-coord-overlap",
+      createdAt: demoDateOffset(-2),
+      readAt: null,
+      dedupeKey: "demo-coord-overlap-avail",
+      isSimulated: true,
+    },
+    {
+      id: "demo-notif-2",
+      recipientId: "demo-user-1",
+      type: "operational_alert",
+      title: "Source Freshness Alert: RB",
+      message: "Regulation Bureau demonstration source has stale observations exceeding the 30-day freshness threshold.",
+      entityType: "data_source",
+      entityId: "10000000-0000-4000-8000-000000000001",
+      destinationPath: "/reliability",
+      createdAt: demoDateOffset(-3),
+      readAt: null,
+      dedupeKey: "demo-stale-source-rb",
+      isSimulated: true,
+    },
+    {
+      id: "demo-notif-3",
+      recipientId: "demo-user-1",
+      type: "operational_alert",
+      title: "Overdue Case: SIM-0016",
+      message: "Expected disposal date has passed for North Valley Technical University (SIM-0016).",
+      entityType: "case",
+      entityId: "SIM-0016",
+      destinationPath: "/complaints/SIM-0016",
+      createdAt: demoDateOffset(-4),
+      readAt: null,
+      dedupeKey: "demo-overdue-16",
+      isSimulated: true,
+    },
+    {
+      id: "demo-notif-4",
+      recipientId: "demo-user-1",
+      type: "coordination_reviewed",
+      title: "Coordination Review Recorded",
+      message: "Demo Bureau Reviewer recorded a decision (legitimate procedural progression) for Eastern Institute of Technology.",
+      entityType: "coordination_item",
+      entityId: "demo-coord-referral",
+      destinationPath: "/coordination?item=demo-coord-referral",
+      createdAt: demoDateOffset(-12),
+      readAt: demoDateOffset(-11),
+      dedupeKey: "demo-coord-referral-reviewed",
+      isSimulated: true,
+    },
+  ];
+}
+
+export function getDemoNotifications(): NexusNotification[] {
+  try {
+    const raw = window.localStorage.getItem(DEMO_NOTIFICATIONS_KEY);
+    if (!raw) {
+      const initial = getInitialDemoNotifications();
+      window.localStorage.setItem(DEMO_NOTIFICATIONS_KEY, JSON.stringify(initial));
+      return initial;
+    }
+    return JSON.parse(raw) as NexusNotification[];
+  } catch {
+    return getInitialDemoNotifications();
+  }
+}
+
+export async function listNotifications(
+  filters: { unreadOnly?: boolean } = {},
+): Promise<NexusNotification[]> {
+  if (isDemoMode()) {
+    let items = getDemoNotifications();
+    if (filters.unreadOnly) {
+      items = items.filter((item) => !item.readAt);
+    }
+    return items.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+  }
+
+  const client = requireSupabase();
+  let query = client
+    .from("notifications")
+    .select(
+      "id, recipient_id, notification_type, title, message, entity_type, entity_id, destination_path, created_at, read_at, dedupe_key",
+    )
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (filters.unreadOnly) {
+    query = query.is("read_at", null);
+  }
+
+  const { data, error } = await query;
+  if (error) throw new Error(`Could not load notifications: ${error.message}`);
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    recipientId: row.recipient_id,
+    type: row.notification_type as NotificationType,
+    title: row.title,
+    message: row.message,
+    entityType: row.entity_type ?? undefined,
+    entityId: row.entity_id ?? undefined,
+    destinationPath: row.destination_path || "/",
+    createdAt: row.created_at,
+    readAt: row.read_at,
+    dedupeKey: row.dedupe_key ?? undefined,
+    isSimulated: false,
+  }));
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  if (isDemoMode()) {
+    return getDemoNotifications().filter((item) => !item.readAt).length;
+  }
+  const client = requireSupabase();
+  const { count, error } = await client
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .is("read_at", null);
+  if (error) throw new Error(`Could not count unread notifications: ${error.message}`);
+  return count ?? 0;
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  if (isDemoMode()) {
+    const notifications = getDemoNotifications();
+    const updated = notifications.map((n) =>
+      n.id === notificationId ? { ...n, readAt: new Date().toISOString() } : n,
+    );
+    window.localStorage.setItem(DEMO_NOTIFICATIONS_KEY, JSON.stringify(updated));
+    return;
+  }
+  const client = requireSupabase();
+  const { error } = await client.rpc("mark_notification_read", {
+    p_notification_id: notificationId,
+  });
+  if (error) throw new Error(`Could not mark notification read: ${error.message}`);
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  if (isDemoMode()) {
+    const notifications = getDemoNotifications();
+    const now = new Date().toISOString();
+    const updated = notifications.map((n) => (n.readAt ? n : { ...n, readAt: now }));
+    window.localStorage.setItem(DEMO_NOTIFICATIONS_KEY, JSON.stringify(updated));
+    return;
+  }
+  const client = requireSupabase();
+  const { error } = await client.rpc("mark_all_notifications_read");
+  if (error) throw new Error(`Could not mark all notifications read: ${error.message}`);
+}
+
+export async function triggerOperationalAlertsCheck(): Promise<number> {
+  if (isDemoMode()) {
+    return 0;
+  }
+  const client = requireSupabase();
+  const { data, error } = await client.rpc("generate_operational_alerts");
+  if (error) {
+    console.warn("Could not generate operational alerts:", error.message);
+    return 0;
+  }
+  return Number(data) || 0;
+}
+
 

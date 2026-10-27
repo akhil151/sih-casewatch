@@ -1,10 +1,11 @@
-export type Bureau = "RB" | "PGRC";
+export type Bureau = "RB" | "PGRC" | "Unmapped";
 
 export type CaseStatus =
   | "Pending"
   | "Under Process"
   | "Disposed"
-  | "Transferred";
+  | "Transferred"
+  | "Unmapped";
 
 export type Freshness = "fresh" | "stale" | "unknown";
 
@@ -57,12 +58,16 @@ export interface SourceCase {
   id: string;
   sourceCaseId: string;
   source: Bureau;
+  rawSource?: string;
   receivingBureau: Bureau;
+  rawReceivingBureau?: string;
   currentBureau: Bureau;
+  rawCurrentBureau?: string;
   institutionId: string | null;
   institutionName: string;
   category: string;
   status: CaseStatus;
+  rawStatus?: string;
   assignedOfficer?: string;
   receivedAt: string;
   lastUpdatedAt: string;
@@ -201,3 +206,25 @@ export interface AdministrationSnapshot {
     active: boolean;
   }>;
 }
+
+export type NotificationType =
+  | "coordination_available"
+  | "coordination_reviewed"
+  | "access_updated"
+  | "operational_alert";
+
+export interface NexusNotification {
+  id: string;
+  recipientId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  entityType?: string;
+  entityId?: string;
+  destinationPath: string;
+  createdAt: string;
+  readAt?: string | null;
+  dedupeKey?: string;
+  isSimulated?: boolean;
+}
+

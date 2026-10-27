@@ -1,16 +1,16 @@
 import { type ReactNode } from 'react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { queryClient } from '@/lib/queryClient';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { AccessGate, NexusShell } from '@/components/nexus-shell';
 import {
   AdministrationPage, AnalyticsPage, CaseDetailPage, CasesPage,
-  CoordinationPage, InstitutionDetailPage, InstitutionsPage, OverviewPage,
+  CoordinationPage, InstitutionDetailPage, InstitutionsPage, NotificationsPage, OverviewPage,
   ReliabilityPage, TimelinePage,
 } from '@/pages/nexus-pages';
-import { useAuth } from '@/auth/AuthContext';
-import { AuthProvider } from '@/auth/AuthContext';
+import { useAuth, AuthProvider } from '@/auth/AuthContext';
 import NotFound from '@/pages/not-found';
 import {
   Redirect,
@@ -19,8 +19,6 @@ import {
   useLocation,
   Router as WouterRouter,
 } from 'wouter';
-
-const queryClient = new QueryClient();
 
 function Protected({ children }: { children: ReactNode }) {
   const { mode, isLoading, profile } = useAuth();
@@ -56,6 +54,7 @@ function Router() {
         <Route path="/analytics"><Protected><AnalyticsPage /></Protected></Route>
         <Route path="/reliability"><Protected><ReliabilityPage /></Protected></Route>
         <Route path="/administration"><Protected><AdministrationPage /></Protected></Route>
+        <Route path="/notifications"><Protected><NotificationsPage /></Protected></Route>
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>
