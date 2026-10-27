@@ -67,74 +67,81 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* LIGHT MODE */
+/* LIGHT MODE - NEXUS QUIET INTELLIGENCE */
 :root {
-  --button-outline: rgba(0, 0, 0, 0.1);
-  --badge-outline: rgba(0, 0, 0, 0.05);
+  --button-outline: rgba(0, 0, 0, 0.08);
+  --badge-outline: rgba(0, 0, 0, 0.04);
 
-  /* Automatic computation of border around primary / danger buttons */
-  --opaque-button-border-intensity: -8; /* In terms of percentages */
+  --opaque-button-border-intensity: -8;
 
-  /* Backgrounds applied on top of other backgrounds when hovered/active */
-  --elevate-1: rgba(0, 0, 0, 0.03);
-  --elevate-2: rgba(0, 0, 0, 0.08);
+  --elevate-1: rgba(32, 43, 60, 0.03);
+  --elevate-2: rgba(32, 43, 60, 0.07);
 
-  --background: 210 24% 96%;
-  --foreground: 215 31% 17%;
-  --border: 214 19% 87%;
-  --card: 0 0% 100%;
-  --card-foreground: 215 31% 17%;
-  --card-border: 214 19% 87%;
-  --sidebar: 216 39% 17%;
-  --sidebar-foreground: 210 25% 91%;
-  --sidebar-border: 216 29% 26%;
-  --sidebar-primary: 205 80% 63%;
-  --sidebar-primary-foreground: 216 39% 13%;
-  --sidebar-accent: 216 30% 24%;
-  --sidebar-accent-foreground: 210 25% 96%;
-  --sidebar-ring: 205 80% 63%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 215 31% 17%;
-  --popover-border: 214 19% 87%;
-  --primary: 211 66% 38%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 207 30% 93%;
-  --secondary-foreground: 215 31% 22%;
-  --muted: 210 22% 93%;
-  --muted-foreground: 215 13% 47%;
-  --accent: 205 54% 93%;
-  --accent-foreground: 211 66% 31%;
-  --destructive: 0 58% 46%;
+  /* Backgrounds: Warm ivory canvas and warm white card surfaces */
+  --background: 45 24% 96%;        /* #F7F5EF */
+  --foreground: 217 30% 18%;        /* #202B3C Deep Ink */
+  --border: 40 16% 87%;             /* #E5E1D8 Warm Grey */
+  --input: 40 14% 82%;              /* #DBD6CB */
+  --ring: 158 32% 32%;              /* #376B58 Forest Green */
+
+  --card: 45 33% 99%;               /* #FFFEFA Warm White */
+  --card-foreground: 217 30% 18%;   /* #202B3C */
+  --card-border: 40 16% 87%;        /* #E5E1D8 */
+
+  --popover: 45 33% 99%;            /* #FFFEFA */
+  --popover-foreground: 217 30% 18%;
+  --popover-border: 40 16% 87%;
+
+  /* Primary: Sophisticated Forest Green */
+  --primary: 158 32% 32%;           /* #376B58 */
+  --primary-foreground: 0 0% 100%;  /* #FFFFFF */
+
+  /* Secondary: Soft Muted Warm Cream */
+  --secondary: 43 20% 92%;          /* #F0EEE6 */
+  --secondary-foreground: 217 30% 20%;
+
+  /* Muted: Soft background and slate text */
+  --muted: 43 18% 93%;              /* #F2F0E8 */
+  --muted-foreground: 218 13% 47%;  /* #697386 Slate */
+
+  /* Accent: Pale Sage */
+  --accent: 129 21% 93%;            /* #E8F0E9 */
+  --accent-foreground: 158 37% 22%; /* #234B3D */
+
+  --destructive: 4 68% 46%;         /* Refined brick red */
   --destructive-foreground: 0 0% 100%;
-  --input: 214 19% 82%;
-  --ring: 205 67% 46%;
-  --chart-1: 211 66% 38%;
-  --chart-2: 163 35% 39%;
-  --chart-3: 37 66% 54%;
-  --chart-4: 225 31% 55%;
-  --chart-5: 4 52% 59%;
-  --app-font-sans: 'DM Sans', sans-serif;
-  --app-font-serif: 'Manrope', sans-serif;
-  --app-font-mono: 'IBM Plex Mono', monospace;
-  --radius: 0.5rem; /* 8px */
-  --shadow-2xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
-  --shadow-xs: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0); /*replace with H S L */
-  --shadow-sm:
-    0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0),
-    0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0);
-  --shadow:
-    0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0),
-    0px 1px 2px -1px hsl(202.8169 89.1213% 53.1373% / 0);
-  --shadow-md:
-    0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0),
-    0px 2px 4px -1px hsl(202.8169 89.1213% 53.1373% / 0);
-  --shadow-lg:
-    0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0),
-    0px 4px 6px -1px hsl(202.8169 89.1213% 53.1373% / 0);
-  --shadow-xl:
-    0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0),
-    0px 8px 10px -1px hsl(202.8169 89.1213% 53.1373% / 0);
-  --shadow-2xl: 0px 2px 0px 0px hsl(202.8169 89.1213% 53.1373% / 0);
+
+  /* Sidebar: Deep Ink with subtle warmth */
+  --sidebar: 217 33% 13%;           /* #151D28 */
+  --sidebar-foreground: 214 20% 88%;/* #D5DDE6 */
+  --sidebar-border: 217 29% 19%;    /* #212C3C */
+  --sidebar-primary: 158 35% 48%;   /* Forest accent */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 217 31% 18%;    /* #202B39 */
+  --sidebar-accent-foreground: 210 25% 96%;
+  --sidebar-ring: 158 32% 40%;
+
+  --chart-1: 158 32% 32%;           /* Forest green */
+  --chart-2: 129 21% 50%;           /* Sage */
+  --chart-3: 38 65% 50%;            /* Warm ochre */
+  --chart-4: 217 26% 45%;           /* Ink slate */
+  --chart-5: 4 58% 52%;             /* Brick */
+
+  --app-font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --app-font-serif: 'Manrope', -apple-system, BlinkMacSystemFont, sans-serif;
+  --app-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius: 0.625rem; /* 10px */
+
+  /* Warm, natural diffused shadows */
+  --shadow-2xs: 0 1px 2px 0 rgba(32, 43, 60, 0.03);
+  --shadow-xs: 0 1px 2px 0 rgba(32, 43, 60, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(32, 43, 60, 0.05), 0 1px 2px 0 rgba(32, 43, 60, 0.03);
+  --shadow: 0 2px 4px 0 rgba(32, 43, 60, 0.04), 0 1px 2px -1px rgba(32, 43, 60, 0.03);
+  --shadow-md: 0 4px 8px -1px rgba(32, 43, 60, 0.06), 0 2px 4px -2px rgba(32, 43, 60, 0.03);
+  --shadow-lg: 0 12px 20px -3px rgba(32, 43, 60, 0.07), 0 4px 6px -4px rgba(32, 43, 60, 0.03);
+  --shadow-xl: 0 20px 28px -5px rgba(32, 43, 60, 0.09), 0 8px 10px -6px rgba(32, 43, 60, 0.03);
+  --shadow-2xl: 0 25px 50px -12px rgba(32, 43, 60, 0.15);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
@@ -296,14 +303,15 @@
 @layer base {
   body { font-family: var(--app-font-sans); }
   button, input, select, textarea { font: inherit; }
-  ::selection { background: hsl(205 55% 84%); color: hsl(215 31% 17%); }
+  ::selection { background: hsl(129 25% 86%); color: hsl(217 30% 18%); }
 }
 
-.nexus-scroll::-webkit-scrollbar { width: 7px; height: 7px; }
-.nexus-scroll::-webkit-scrollbar-thumb { background: hsl(214 13% 76%); border-radius: 8px; }
+.nexus-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
+.nexus-scroll::-webkit-scrollbar-thumb { background: hsl(40 14% 78%); border-radius: 8px; }
+.nexus-scroll::-webkit-scrollbar-thumb:hover { background: hsl(40 14% 68%); }
 .nexus-scroll::-webkit-scrollbar-track { background: transparent; }
-.page-enter { animation: nexus-enter 420ms cubic-bezier(.2,.75,.25,1) both; }
-@keyframes nexus-enter { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: translateY(0); } }
+.page-enter { animation: nexus-enter 380ms cubic-bezier(.16,1,.3,1) both; }
+@keyframes nexus-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
 /**
  * Using the elevate system.

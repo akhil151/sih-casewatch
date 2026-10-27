@@ -41,15 +41,15 @@ function formatRelativeTime(dateString: string): string {
 function getTypeDetails(type: NotificationType): { label: string; tone: string; icon: typeof Bell } {
   switch (type) {
     case 'coordination_available':
-      return { label: 'Review Queue', tone: 'bg-sky-50 text-sky-800 border-sky-200', icon: GitCompareArrows };
+      return { label: 'Review Queue', tone: 'bg-[#E8F0E9] text-[#245842] border-[#CFE3D5]', icon: GitCompareArrows };
     case 'coordination_reviewed':
-      return { label: 'Review Outcome', tone: 'bg-indigo-50 text-indigo-800 border-indigo-200', icon: Sparkles };
+      return { label: 'Review Outcome', tone: 'bg-[#EAF2F0] text-[#265349] border-[#CDE0DC]', icon: Sparkles };
     case 'access_updated':
-      return { label: 'Account Access', tone: 'bg-emerald-50 text-emerald-800 border-emerald-200', icon: Lock };
+      return { label: 'Account Access', tone: 'bg-[#F5F3EC] text-[#55606E] border-[#E5E1D8]', icon: Lock };
     case 'operational_alert':
-      return { label: 'System Alert', tone: 'bg-amber-50 text-amber-800 border-amber-200', icon: ShieldAlert };
+      return { label: 'System Alert', tone: 'bg-[#FDF8EC] text-[#825B1D] border-[#EFE1C3]', icon: ShieldAlert };
     default:
-      return { label: 'Update', tone: 'bg-slate-50 text-slate-800 border-slate-200', icon: Bell };
+      return { label: 'Update', tone: 'bg-[#F5F3EC] text-[#55606E] border-[#E5E1D8]', icon: Bell };
   }
 }
 
@@ -148,13 +148,13 @@ export function NotificationCenter() {
         <button
           type="button"
           aria-label={`Notifications (${unreadCount} unread)`}
-          className="relative grid h-8 w-8 place-items-center rounded-md border border-[hsl(var(--border))] bg-card text-muted-foreground transition-colors hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20"
+          className="relative grid h-8 w-8 place-items-center rounded-lg border border-[hsl(var(--border))] bg-card text-muted-foreground shadow-2xs transition-colors hover:border-[#376B58]/40 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-[#376B58]/20"
           data-testid="button-notifications-bell"
         >
           <Bell size={15} />
           {unreadCount > 0 && (
             <span
-              className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[9px] font-bold text-white shadow-sm ring-2 ring-white"
+              className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#376B58] px-1 text-[9px] font-bold text-white shadow-xs ring-2 ring-white"
               data-testid="badge-unread-count"
             >
               {unreadCount > 9 ? '9+' : unreadCount}
@@ -165,17 +165,17 @@ export function NotificationCenter() {
       <PopoverContent
         align="end"
         sideOffset={8}
-        className="z-50 w-[360px] max-w-[calc(100vw-2rem)] p-0 sm:w-[420px]"
+        className="z-50 w-[360px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-[hsl(var(--border))] bg-card p-0 shadow-lg sm:w-[420px]"
       >
-        <div className="flex items-center justify-between border-b border-[hsl(var(--border))] bg-slate-50/70 px-4 py-3">
+        <div className="flex items-center justify-between border-b border-[hsl(var(--border))] bg-[hsl(var(--secondary))] px-4 py-3">
           <div className="flex items-center gap-2">
-            <h2 className="text-xs font-bold text-slate-800">Notifications</h2>
+            <h2 className="text-xs font-bold text-foreground">Notifications</h2>
             {mode === 'demo' ? (
-              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[8px] font-bold tracking-wide text-amber-800">
+              <span className="rounded-full border border-amber-300 bg-amber-100/70 px-2 py-0.5 text-[8px] font-bold tracking-wide text-amber-800">
                 SIMULATED
               </span>
             ) : unreadCount > 0 ? (
-              <span className="rounded bg-red-100 px-1.5 py-0.5 text-[8px] font-bold text-red-800">
+              <span className="rounded-full border border-emerald-200 bg-[#E8F0E9] px-2 py-0.5 text-[8px] font-bold text-[#245842]">
                 {unreadCount} unread
               </span>
             ) : null}
@@ -185,10 +185,10 @@ export function NotificationCenter() {
               type="button"
               onClick={() => setUnreadOnly((prev) => !prev)}
               aria-pressed={unreadOnly}
-              className={`rounded px-2 py-1 text-[9px] font-semibold transition ${
+              className={`rounded-md px-2.5 py-1 text-[9px] font-semibold transition ${
                 unreadOnly
-                  ? 'bg-[#254866] text-white'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                  ? 'bg-[#376B58] text-white shadow-2xs'
+                  : 'border border-[hsl(var(--border))] bg-card text-slate-700 hover:bg-slate-50'
               }`}
               data-testid="button-toggle-unread-filter"
             >
@@ -200,18 +200,18 @@ export function NotificationCenter() {
                 type="button"
                 onClick={() => markAllReadMutation.mutate()}
                 disabled={markAllReadMutation.isPending}
-                className="rounded border border-slate-200 bg-white px-2 py-1 text-[9px] font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+                className="rounded-md border border-[hsl(var(--border))] bg-card px-2.5 py-1 text-[9px] font-semibold text-slate-700 shadow-2xs transition hover:bg-slate-50 disabled:opacity-50"
                 title="Mark all as read"
                 data-testid="button-mark-all-read"
               >
-                <CheckCheck size={11} className="mr-1 inline text-emerald-600" />
+                <CheckCheck size={11} className="mr-1 inline text-[#376B58]" />
                 Mark all read
               </button>
             )}
           </div>
         </div>
 
-        <div className="max-h-[380px] divide-y divide-slate-100 overflow-y-auto">
+        <div className="max-h-[380px] divide-y divide-[hsl(var(--border))]/50 overflow-y-auto">
           {isLoading ? (
             <div className="space-y-3 p-4">
               <div className="h-3 w-32 animate-pulse rounded bg-slate-200" />
@@ -224,17 +224,17 @@ export function NotificationCenter() {
               <button
                 type="button"
                 onClick={() => refetch()}
-                className="mt-3 inline-flex items-center gap-1.5 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-md border border-[hsl(var(--border))] bg-card px-2.5 py-1.5 text-[10px] font-semibold text-slate-700 hover:bg-slate-50"
               >
                 <RefreshCw size={11} /> Retry
               </button>
             </div>
           ) : notifications.length === 0 ? (
             <div className="p-8 text-center" data-testid="notifications-empty-state">
-              <div className="mx-auto mb-2 grid h-8 w-8 place-items-center rounded-full bg-slate-100 text-slate-400">
+              <div className="mx-auto mb-2 grid h-8 w-8 place-items-center rounded-full bg-[hsl(var(--muted))] text-muted-foreground">
                 <Bell size={14} />
               </div>
-              <p className="text-xs font-semibold text-slate-700">
+              <p className="text-xs font-semibold text-foreground">
                 {unreadOnly ? 'No unread notifications' : 'No notifications'}
               </p>
               <p className="mt-1 text-[10px] text-muted-foreground">
@@ -250,8 +250,10 @@ export function NotificationCenter() {
               return (
                 <div
                   key={notification.id}
-                  className={`group relative flex items-start gap-3 p-3 transition hover:bg-slate-50 ${
-                    isUnread ? 'bg-[#f4f8fb]/80' : 'bg-white'
+                  className={`group relative flex items-start gap-3 p-3.5 transition ${
+                    isUnread
+                      ? 'border-l-[3px] border-l-[#376B58] bg-[#F5F8F6]'
+                      : 'border-l-[3px] border-l-transparent bg-card hover:bg-[#FAF9F5]'
                   }`}
                   data-testid={`notification-item-${notification.id}`}
                 >
@@ -261,15 +263,17 @@ export function NotificationCenter() {
                     className="min-w-0 flex-1 text-left focus:outline-none"
                   >
                     <div className="flex items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.2 text-[8px] font-semibold ${tone}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[8px] font-semibold ${tone}`}>
                         <Icon size={9} />
                         {label}
                       </span>
                       {notification.isSimulated && (
-                        <span className="text-[8px] font-bold text-amber-700">SIMULATED</span>
+                        <span className="rounded-full border border-amber-200 bg-amber-50 px-1.5 py-0.2 text-[8px] font-bold text-amber-700">
+                          SIMULATED
+                        </span>
                       )}
                       <span
-                        className="ml-auto inline-flex items-center gap-1 font-mono text-[8px] text-slate-400"
+                        className="ml-auto inline-flex items-center gap-1 font-mono text-[8px] text-muted-foreground"
                         title={new Date(notification.createdAt).toLocaleString()}
                       >
                         <Clock size={8} />
@@ -278,13 +282,13 @@ export function NotificationCenter() {
                     </div>
                     <div className="mt-1.5 flex items-center gap-1.5">
                       {isUnread && (
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-sky-600" />
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#376B58]" />
                       )}
-                      <div className={`truncate text-[11px] font-semibold ${isUnread ? 'text-slate-900' : 'text-slate-700'}`}>
+                      <div className={`truncate text-[11px] font-semibold ${isUnread ? 'text-[#1E2838]' : 'text-slate-700'}`}>
                         {notification.title}
                       </div>
                     </div>
-                    <p className="mt-1 line-clamp-2 text-[10px] leading-4 text-slate-500">
+                    <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-muted-foreground">
                       {notification.message}
                     </p>
                   </button>
@@ -310,8 +314,8 @@ export function NotificationCenter() {
           )}
         </div>
 
-        <div className="flex items-center justify-between border-t border-[hsl(var(--border))] bg-slate-50/50 px-4 py-2 text-[10px]">
-          <span className="text-slate-400">In-app activity log</span>
+        <div className="flex items-center justify-between border-t border-[hsl(var(--border))] bg-[hsl(var(--secondary))]/60 px-4 py-2.5 text-[10px]">
+          <span className="text-muted-foreground">In-app activity log</span>
           <button
             type="button"
             onClick={() => {
