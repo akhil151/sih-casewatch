@@ -8,8 +8,8 @@ import {
   type ReactNode,
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
-import { supabase, supabaseConfigured } from "@/lib/supabase";
-import { clearApplicationCache } from "@/lib/queryClient";
+import { supabase, supabaseConfigured } from "../lib/supabase";
+import { clearApplicationCache } from "../lib/queryClient";
 
 export interface AuthProfile {
   id: string;
@@ -38,6 +38,46 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 function formatAuthError(error: unknown) {
   return error instanceof Error ? error.message : "Authentication failed.";
+}
+
+/**
+ * Constructs a fully qualified absolute redirect URL for Google OAuth callback.
+ * Ensures the scheme (https:// or http://) is always present to prevent Supabase GoTrue
+ * from treating a bare domain as a relative path and redirecting to <supabase-ref>.supabase.co/<domain>.
+ */
+export function getOAuthRedirectUrl(
+  customOrigin?: string,
+  customBase?: string,
+): string {
+  let rawOrigin =
+    customOrigin ??
+    (typeof window !== "undefined" && window.location?.origin
+      ? window.location.origin
+      : "");
+
+  if (!rawOrigin || rawOrigin === "null") {
+    rawOrigin = "https://sih-casewatch.vercel.app";
+  }
+
+  rawOrigin = rawOrigin.trim();
+
+  // If origin lacks http:// or https:// scheme, prepend https://
+  const validOrigin =
+    rawOrigin.startsWith("http://") || rawOrigin.startsWith("https://")
+      ? rawOrigin
+      : `https://${rawOrigin}`;
+
+  const rawBase = (
+    customBase ??
+    (typeof import.meta !== "undefined" && (import.meta as any).env?.BASE_URL
+      ? (import.meta as any).env.BASE_URL
+      : "/")
+  ).trim();
+
+  const basePath = rawBase === "/" ? "" : rawBase.replace(/\/+$/, "");
+  const callbackPath = `${basePath}/auth/callback`.replace(/\/+/g, "/");
+
+  return new URL(callbackPath, validOrigin).toString();
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -104,30 +144,88 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const client = supabase;
-    if (!client || window.sessionStorage.getItem(demoStorageKey) === "true") {
+    if (
+      !client ||
+      (typeof window !== "undefined" &&
+        window.sessionStorage.getItem(demoStorageKey) === "true")
+    ) {
       setIsLoading(false);
       return;
     }
 
     let active = true;
+
+    // 1. Inspect URL parameters and hash for OAuth errors (e.g., user cancellation or access denied)
+    if (typeof window !== "undefined") {
+      const hash = window.location.hash.replace(/^#/, "");
+      const search = window.location.search.replace(/^\?/, "");
+      const hashParams = new URLSearchParams(hash);
+      const searchParams = new URLSearchParams(search);
+
+      const rawError =
+        searchParams.get("error_description") ||
+        hashParams.get("error_description") ||
+        searchParams.get("error") ||
+        hashParams.get("error");
+
+      if (rawError) {
+        const decoded = decodeURIComponent(rawError.replace(/\+/g, " "));
+        setAuthError(decoded);
+        setIsLoading(false);
+        try {
+          window.history.replaceState(null, "", window.location.pathname);
+        } catch {
+          // ignore
+        }
+      }
+    }
+
+    const cleanUrlTokens = () => {
+      if (
+        typeof window !== "undefined" &&
+        window.location.hash.includes("access_token")
+      ) {
+        try {
+          window.history.replaceState(
+            null,
+            "",
+            window.location.pathname + window.location.search,
+          );
+        } catch {
+          // ignore
+        }
+      }
+    };
+
     const initialize = async () => {
       const { data, error } = await client.auth.getSession();
       if (!active) return;
       if (error) setAuthError(error.message);
       await loadProfile(data.session?.user ?? null);
+      cleanUrlTokens();
     };
+
     void initialize().catch((error: unknown) => {
       if (!active) return;
       setAuthError(formatAuthError(error));
       setIsLoading(false);
     });
 
-    const { data } = client.auth.onAuthStateChange((_event, session: Session | null) => {
-      if (!active) return;
-      if (window.sessionStorage.getItem(demoStorageKey) === "true") return;
-      setIsLoading(Boolean(session));
-      void Promise.resolve().then(() => loadProfile(session?.user ?? null));
-    });
+    const { data } = client.auth.onAuthStateChange(
+      (_event, session: Session | null) => {
+        if (!active) return;
+        if (
+          typeof window !== "undefined" &&
+          window.sessionStorage.getItem(demoStorageKey) === "true"
+        )
+          return;
+        setIsLoading(Boolean(session));
+        void Promise.resolve().then(async () => {
+          await loadProfile(session?.user ?? null);
+          cleanUrlTokens();
+        });
+      },
+    );
 
     return () => {
       active = false;
@@ -142,11 +240,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     setAuthError(null);
-    const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
-    const redirectTo = new URL(
-      `${basePath}/auth/callback`,
-      window.location.origin,
-    ).toString();
+    const redirectTo = getOAuthRedirectUrl();
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: { redirectTo },

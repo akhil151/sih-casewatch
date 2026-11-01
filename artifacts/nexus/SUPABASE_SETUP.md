@@ -29,7 +29,15 @@ The seed is deterministic and idempotent. It creates 20 synthetic institutions, 
 1. In Supabase, open **Authentication → Providers → Google** and enable Google.
 2. Create a Google OAuth client in Google Cloud Console. Add the Supabase callback URL shown in the Google provider setup as an authorized redirect URI.
 3. Paste the Google client ID and client secret into the Supabase Google provider settings. Keep the Google client secret in Supabase only.
-4. In Supabase **Authentication → URL Configuration**, set the site URL to the app's published URL and add its auth callback route (`/auth/callback`) to the redirect URL allow list. For local/Replit development, add the exact Replit preview URL plus `/auth/callback`.
+4. In Supabase **Authentication → URL Configuration**:
+   - Set **Site URL** to the deployed production URL with scheme: `https://sih-casewatch.vercel.app` (CRITICAL: Do NOT omit `https://`, otherwise Supabase resolves the domain as a relative path resulting in `https://<ref>.supabase.co/sih-casewatch.vercel.app` and fails with `{"error":"requested path is invalid"}`).
+   - In **Redirect URLs (Allow list)**, add:
+     - `https://sih-casewatch.vercel.app/**`
+     - `https://sih-casewatch.vercel.app/auth/callback`
+     - `https://sih-casewatch.vercel.app`
+     - `http://localhost:5173/**`
+     - `http://localhost:5173/auth/callback`
+     - `http://localhost:5173`
 5. Save both provider configurations. Replit's browser app calls Supabase OAuth and never handles the Google client secret.
 
 Supabase OAuth is not operational until those steps are completed. No Google OAuth credentials are included in this repository.

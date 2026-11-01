@@ -44,6 +44,7 @@ import {
   resetSimulatedChanges,
 } from "../src/data/nexus-data.ts";
 import { demoCases, demoInstitutions, demoCoordinationItems } from "../src/data/demo-data.ts";
+import { getOAuthRedirectUrl } from "../src/auth/AuthContext.tsx";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -295,4 +296,39 @@ test("15. Refresh, sign-out, missing credentials, database failure and empty dat
   resetSimulatedChanges();
   assert.equal(mockLocalStorage.getItem("nexus.simulated-reviews"), null);
   assert.equal(mockLocalStorage.getItem("nexus.simulated-notifications"), null);
+});
+
+test("16. Google OAuth redirect URL construction ensures absolute scheme and valid callback path", () => {
+  // Test case 1: Deployed Vercel URL with https
+  assert.equal(
+    getOAuthRedirectUrl("https://sih-casewatch.vercel.app"),
+    "https://sih-casewatch.vercel.app/auth/callback"
+  );
+
+  // Test case 2: Bare domain missing https scheme (remedies the malformed concatenation bug)
+  assert.equal(
+    getOAuthRedirectUrl("sih-casewatch.vercel.app"),
+    "https://sih-casewatch.vercel.app/auth/callback"
+  );
+
+  // Test case 3: Local development URL with port
+  assert.equal(
+    getOAuthRedirectUrl("http://localhost:5173"),
+    "http://localhost:5173/auth/callback"
+  );
+
+  // Test case 4: Base path handling with leading and trailing slashes
+  assert.equal(
+    getOAuthRedirectUrl("https://sih-casewatch.vercel.app", "/"),
+    "https://sih-casewatch.vercel.app/auth/callback"
+  );
+  assert.equal(
+    getOAuthRedirectUrl("https://sih-casewatch.vercel.app", "/subpath/"),
+    "https://sih-casewatch.vercel.app/subpath/auth/callback"
+  );
+
+  // Test case 5: Always produces an absolute URL starting with http:// or https://
+  const defaultUrl = getOAuthRedirectUrl();
+  assert.match(defaultUrl, /^https?:\/\//);
+  assert.ok(defaultUrl.endsWith("/auth/callback"));
 });

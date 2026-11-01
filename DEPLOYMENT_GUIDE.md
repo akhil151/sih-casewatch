@@ -100,16 +100,23 @@ Once your Vercel deployment URL is generated (e.g., `https://nexus-aicte.vercel.
 ### Step 5.1: Update Supabase URL Configuration
 1. Open your [Supabase Dashboard](https://supabase.com/dashboard).
 2. Navigate to **Authentication** → **URL Configuration**.
-3. Set **Site URL** to your production Vercel URL:
+3. Set **Site URL** to your production Vercel URL (e.g. `https://sih-casewatch.vercel.app`):
    ```
-   https://<your-project>.vercel.app
+   https://sih-casewatch.vercel.app
    ```
+   > [!CRITICAL]
+   > **Site URL Must Include `https://` Scheme**:
+   > Never enter a bare domain (e.g. `sih-casewatch.vercel.app`) without the `https://` protocol scheme.
+   > If the scheme is omitted, Supabase GoTrue treats the domain as a relative path and resolves it against its own base URL, resulting in a malformed redirect to `https://<ref>.supabase.co/sih-casewatch.vercel.app#access_token=...` which fails with `{"error":"requested path is invalid"}`.
+
 4. In **Redirect URLs (Allow list)**, add the following patterns:
-   - `https://<your-project>.vercel.app/**`
-   - `https://<your-project>.vercel.app/auth/callback`
+   - `https://sih-casewatch.vercel.app/**`
+   - `https://sih-casewatch.vercel.app/auth/callback`
+   - `https://sih-casewatch.vercel.app`
    - `https://*-<your-team>.vercel.app/**` *(Optional: enables preview branch deployments)*
    - `http://localhost:5173/**` *(Keep for local development)*
    - `http://localhost:5173/auth/callback` *(Keep for local development)*
+   - `http://localhost:5173` *(Keep for local development)*
 5. Click **Save**.
 
 ---
@@ -122,11 +129,11 @@ If Google Sign-In is enabled for your Supabase project:
 2. Navigate to **APIs & Services** → **Credentials**.
 3. Select your **OAuth 2.0 Client ID** (used for Supabase Auth).
 4. Under **Authorized JavaScript origins**, add:
-   - `https://<your-project>.vercel.app`
+   - `https://sih-casewatch.vercel.app`
    - `http://localhost:5173` *(Keep for local development)*
-   - `https://<your-supabase-ref>.supabase.co`
+   - `https://ylmmczrcetjhwudgwjsr.supabase.co`
 5. Under **Authorized redirect URIs**, confirm:
-   - `https://<your-supabase-ref>.supabase.co/auth/v1/callback`
+   - `https://ylmmczrcetjhwudgwjsr.supabase.co/auth/v1/callback`
    *(Do NOT change this to the Vercel domain; Google must redirect back to Supabase's auth handler, which then redirects to NEXUS).*
 6. Click **Save**.
 
@@ -138,7 +145,7 @@ If Google Sign-In is enabled for your Supabase project:
 Before pushing or releasing, verify the local build:
 
 ```powershell
-# 1. Run all 15 automated verification tests
+# 1. Run all 16 automated verification tests
 corepack pnpm test
 
 # 2. Run TypeScript strict typecheck
